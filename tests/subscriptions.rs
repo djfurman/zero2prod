@@ -1,6 +1,7 @@
-use sqlx::PgPool;
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
-use zero2prod::configuration::get_configuration;
+use uuid::Uuid;
+use zero2prod::configuration::{get_configuration, DatabaseSettings};
 use zero2prod::startup::run;
 
 pub struct TestApp {
@@ -16,11 +17,11 @@ async fn spawn_app() -> TestApp {
     // Construct the API's address
     let api_address = format!("http://127.0.0.1:{}", port);
     // Pull the configuration for the database
-    let configuration = get_configuration().expect("Failed to read configuration.");
+    let mut configuration = get_configuration().expect("Failed to read configuration.");
+    // Randomize the database using a Uuid V4
+    configuration.database.name = Uuid::new_v4().to_string();
     // Setup the connection to the database pool
-    let db_pool = PgPool::connect(&configuration.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres");
+    let db_pool = configure_database(&configuration.database).await;
 
     // Start the testing server
     let server = run(listener, db_pool.clone()).expect("Failed to bind address");
@@ -30,6 +31,51 @@ async fn spawn_app() -> TestApp {
         api_address,
         db_pool,
     }
+}
+
+pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+    // Create
+    let mut db_conn = PgConnection::connect(&config.connection_string_without_db())
+        .await
+        .expect("Failed to connect to Postgres");
+
+    db_conn
+        .execute(format!(r#"Create Database "{}";"#, config.name).as_str())
+        .await
+        .expect("Failed to create database.");
+
+    // Migrate
+    let db_pool = PgPool::connect(&config.connection_string())
+        .await
+        .expect("Failed to connect to Postgres new db.");
+
+    sqlx::migrate!("./migrations")
+        .run(&db_pool)
+        .await
+        .expect("Failed to migrate the database.");
+
+    db_pool
+}
+
+#[tokio::test]
+async fn health_check_works() {
+    // Arrange
+    // Pull back the application data used for the test server
+    let app = spawn_app().await;
+    // Needs the `reqwest` crate to run HTTP requests against the server
+    // Define a client for HTTP requests in testing
+    let client = reqwest::Client::new();
+
+    // Act
+    let response = client
+        .get(&format!("{}/health-check", &app.api_address))
+        .send()
+        .await
+        .expect("Failed to run request");
+
+    // Assert
+    assert!(response.status().is_success());
+    assert_eq!(Some(0), response.content_length());
 }
 
 #[tokio::test]
