@@ -13,7 +13,7 @@ async fn main() -> Result<(), std::io::Error> {
     // Panic if we cannot read configuration
     let configuration = get_configuration().expect("Failed to read configuration");
 
-    let pool = PgPool::connect(&configuration.database.connection_string().expose_secret())
+    let pool = PgPool::connect(configuration.database.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres database");
 
