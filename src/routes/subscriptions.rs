@@ -38,7 +38,6 @@ pub async fn insert_subscriber(db_pool: &PgPool, form: &FormData) -> Result<(), 
     name = "Adding a subscriber",
     skip(form, db_pool),
     fields(
-        request_id = %Uuid::new_v4(),
         subscriber_email = %form.email,
         subscriber_name = %form.name
     )
