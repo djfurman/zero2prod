@@ -30,7 +30,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       # Implements smart caching for rust/cargo projects with sensible defaults
-      - name: Rust Cache Action
+      - name: Rust cache action
         uses: Swatinem/rust-cache@v2
         with:
           key: sqlx-${{ env.SQLX_VERSION }}
