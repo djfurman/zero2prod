@@ -6,3 +6,4 @@ database:
   password: password
   port: 5432
   username: postgres
+  require_ssl: false
