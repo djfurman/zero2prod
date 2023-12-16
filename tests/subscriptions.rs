@@ -3,6 +3,7 @@ use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
+use zero2prod::email_client::EmailClient;
 use zero2prod::startup::run;
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
@@ -44,8 +45,20 @@ async fn spawn_app() -> TestApp {
     // Setup the connection to the database pool
     let db_pool = configure_database(&configuration.database).await;
 
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address.");
+
+    let email_client = EmailClient::new(
+        configuration.email_client.authorization_token,
+        configuration.email_client.base_url,
+        sender_email,
+    );
+
     // Start the testing server
-    let server = run(listener, db_pool.clone()).expect("Failed to bind address");
+    let server =
+        run(listener, db_pool.clone(), email_client.clone()).expect("Failed to bind address");
     let _ = tokio::spawn(server);
 
     TestApp {
@@ -96,7 +109,7 @@ async fn health_check_works() {
 
     // Assert
     assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
+    assert_eq!(Some(19), response.content_length());
 }
 
 #[tokio::test]
@@ -157,7 +170,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
         assert_eq!(
             400,
             response.status().as_u16(),
-            "The API did not faile with 400 Bad Request when the payload was {}.",
+            "The API did not fail with 400 Bad Request when the payload was {}.",
             error_message
         )
     }
