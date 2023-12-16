@@ -1,5 +1,5 @@
 # Use the latest Rust stable release as builder
-FROM rust:1.73.0 as builder
+FROM rust:1.74.1 as builder
 
 # Switch working directory to `/opt/app` (same as `cd /opt/app`)
 # The `/opt/app` folder will be created by the container in case it does not already exist
