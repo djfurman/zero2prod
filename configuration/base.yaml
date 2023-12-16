@@ -7,3 +7,7 @@ database:
   port: 5432
   username: postgres
   require_ssl: false
+email_client:
+  authorization_token: "my-fake-auth-token"
+  base_url: "localhost"
+  sender_email: "test@gmail.com"
