@@ -13,12 +13,13 @@ pub struct EmailClient {
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "PascalCase")]
-struct SendEmailRequest {
-    from: String,
-    to: String,
-    subject: String,
-    html_body: String,
-    text_body: String,
+// Lifetime parameters always start with an apostrophe, `'`
+struct SendEmailRequest<'a> {
+    from: &'a str,
+    to: &'a str,
+    subject: &'a str,
+    html_body: &'a str,
+    text_body: &'a str,
 }
 
 impl EmailClient {
@@ -35,11 +36,11 @@ impl EmailClient {
             .expect("Error computing email API url.");
 
         let payload = SendEmailRequest {
-            from: self.sender.as_ref().to_owned(),
-            to: recipient.as_ref().to_owned(),
-            subject: subject.to_owned(),
-            html_body: html_content.to_owned(),
-            text_body: text_content.to_owned(),
+            from: self.sender.as_ref(),
+            to: recipient.as_ref(),
+            subject: subject,
+            html_body: html_content,
+            text_body: text_content,
         };
 
         let builder = self
