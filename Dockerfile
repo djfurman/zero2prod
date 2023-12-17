@@ -8,7 +8,7 @@ WORKDIR /opt/app
 # Install the required system dependencies for our linking configuration
 RUN apt-get update -y \
     && apt-get install lld clang -y \
-    && apt-get install -y --no-install-recommends openssl ca-certificates
+    && apt-get install -y --no-install-recommends ca-certificates
 
 # Copy all files from the working environment to the image
 COPY . .
@@ -25,9 +25,9 @@ FROM debian:bookworm-slim as runtime
 # Switch to Linux standard /opt directory for application instsall
 WORKDIR /opt/app
 
-# Update OpenSSL and the certificate store for TLS verifications
+# Update the certificate store for TLS verifications
 RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt-lists/*
