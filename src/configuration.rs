@@ -42,6 +42,7 @@ pub struct EmailClientSettings {
     pub authorization_token: Secret<String>,
     pub base_url: String,
     pub sender_email: String,
+    pub timeout_milliseconds: u64,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
@@ -127,5 +128,9 @@ impl TryFrom<String> for Environment {
 impl EmailClientSettings {
     pub fn sender(&self) -> Result<SubscriberEmail, String> {
         SubscriberEmail::parse(self.sender_email.clone())
+    }
+
+    pub fn timeout(&self) -> std::time::Duration {
+        std::time::Duration::from_millis(self.timeout_milliseconds)
     }
 }
