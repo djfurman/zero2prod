@@ -4,17 +4,10 @@ use crate::helpers::spawn_app;
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     // Act
     let body = "name=Daniel%20Furman&email=djfurman%40users.noreply.github.com";
-    let response = client
-        .post(&format!("{}/subscriptions", &app.api_address))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(body)
-        .send()
-        .await
-        .expect("Failed to execute request");
+    let response = app.post_subscription(body.into()).await;
 
     // Assert
     // Ensure we have the proper status code
@@ -34,7 +27,6 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 async fn subscribe_returns_a_400_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=daniel%20furman", "missing email input"),
         (
@@ -46,13 +38,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 
     for (invalid_body, error_message) in test_cases {
         // Act
-        let response = client
-            .post(&format!("{}/subscriptions", &app.api_address))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(invalid_body)
-            .send()
-            .await
-            .expect("Failed to execute request");
+        let response = app.post_subscription(invalid_body.into()).await;
 
         // Assert
         assert_eq!(
@@ -68,7 +54,6 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
     let test_cases = vec![
         (
             "name=&email=email=djfurman%40users.noreply.github.com",
@@ -83,13 +68,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
 
     for (body, description) in test_cases {
         // Act
-        let response = client
-            .post(&format!("{}/subscriptions", &app.api_address))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(body)
-            .send()
-            .await
-            .expect("Failed to execute request.");
+        let response = app.post_subscription(body.into()).await;
 
         // Assert
         assert_eq!(
