@@ -61,6 +61,7 @@ pub fn run(
 ) -> Result<Server, std::io::Error> {
     // Wrap the pool using web::Data which is an Arc smart pointer
     let db_pool = web::Data::new(db_pool);
+    let email_client = web::Data::new(email_client);
 
     // Define the server with the correct listener
     let server = HttpServer::new(move || {
