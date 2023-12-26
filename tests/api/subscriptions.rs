@@ -149,3 +149,27 @@ async fn subscribe_sends_a_confirmation_email_with_a_link() {
 
     assert_eq!(confirmation_links.html, confirmation_links.plain_text);
 }
+
+#[tokio::test]
+async fn subscribe_fails_if_there_is_a_fatal_database_error() {
+    // Arrange
+    let app = spawn_app().await;
+    let body = "name=Daniel%20Furman&email=djfurman%40users.noreply.github.com";
+
+    // Sabotage the database!
+    sqlx::query!(
+        r#"
+        Alter Table subscription_tokens
+        Drop Column subscription_token;
+    "#
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    // Act
+    let response = app.post_subscription(body.into()).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 500);
+}
