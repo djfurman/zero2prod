@@ -3,6 +3,7 @@ use crate::configuration::Settings;
 use crate::email_client::EmailClient;
 use crate::routes::confirm;
 use crate::routes::health_check;
+use crate::routes::publish_newsletter;
 use crate::routes::subscribe;
 use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::postgres::PgPoolOptions;
@@ -79,6 +80,7 @@ pub fn run(
             // All middlewares are added with the wrap command
             .wrap(TracingLogger::default())
             .route("/health-check", web::get().to(health_check))
+            .route("/newsletters", web::post().to(publish_newsletter))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
             // Register the connection as part of the application state
